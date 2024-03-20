@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case-Study</title>
+<style>
+    body {
+        margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f7f7f7;
+        position: relative;
+    }
+
+    .container {
+        display: flex;
+        justify-content: space-between;
+        margin: 20px;
+    }
+
+    .window {
+        padding: 15px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+        overflow-y: auto;
+        overflow-x: auto;
+        position: relative;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .window1 {
+        width: 40%;
+        max-width: calc(500px - 30px);
+        height: 80vh;
+        max-height: calc(80vh - 30px);
+        position: relative;
+    }
+
+    .window2 {
+        width: 40%;
+        height: 50vh;
+        resize: both;
+        overflow: auto;
+        cursor: default;
+        z-index: 2;
+        position: absolute;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        left: calc(40% + 20px);
+        top: 0;
+    }
+
+    .window img {
+        width: 300px;
+        height: 200px;
+        margin: 10px;
+        cursor: pointer;
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .window img:hover {
+        transform: scale(1.1);
+    }
+
+    .window.flex-column {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .resize-handle, .drag-handle {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background-color: #ccc;
+        border-radius: 50%;
+        transition: background-color 0.3s ease-in-out;
+        z-index: 3;
+    }
+
+    .resize-handle:hover, .drag-handle:hover {
+        background-color: #999;
+    }
+
+    .resize-handle {
+        bottom: -10px;
+        right: -10px;
+        cursor: se-resize;
+    }
+
+    .drag-handle {
+        cursor: move;
+        top: -10px;
+        left: -10px;
+    }
+
+    .drag-handle:hover {
+        background-color: #999;
+    }
+
+    .reset-button {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        padding: 10px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: background-color 0.3s ease-in-out;
+        z-index: 4;
+    }
+
+    .reset-button:hover {
+        background-color: #0056b3;
+    }
+
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="window window1 flex-column" id="window1">
+        <h2 style="text-align: center; font-size: 24px; margin-bottom: 20px;">Resimler</h2>
+        <img src="resim1.jpg" alt="Resim 1" draggable="true">
+        <img src="resim2.jpg" alt="Resim 2" draggable="true">
+        <img src="resim3.jpg" alt="Resim 3" draggable="true">
+        <img src="resim4.jpg" alt="Resim 4" draggable="true">
+        <img src="resim5.jpg" alt="Resim 5" draggable="true">
+    </div>
+    <div class="window window2" id="window2">
+        <h2 style="text-align: center; font-size: 24px; margin-bottom: 20px;">İşlem Penceresi</h2>
+        <button class="reset-button" id="resetButton">↺</button>
+        <div class="drag-handle" id="dragHandle"></div>
+        <div class="resize-handle" id="resizeHandle"></div>
+        <p style="text-align: center;">Bu bir işlem penceresi. İçeriği buraya ekleyebilirsiniz.</p>
+    </div>
+</div>
+
+<script>
+    const window2 = document.getElementById("window2");
+    const dragHandle = document.getElementById("dragHandle");
+    const resizeHandle = document.getElementById("resizeHandle");
+    const resetButton = document.getElementById("resetButton");
+
+    // Sürükleme işlemi için gerekli değişkenler
+    let isDragging = false;
+    let dragStartX, dragStartY, initialLeft, initialTop;
+    let startWidth, startHeight;
+
+    // Sürükleme işleminin başlatılması için olay dinleyicisi
+    dragHandle.addEventListener("mousedown", startDrag);
+    resizeHandle.addEventListener("mousedown", startResize);
+    resetButton.addEventListener("click", resetWindow);
+
+    // Sürükleme işleminin başlatılması
+    function startDrag(e) {
+        e.preventDefault();
+        isDragging = true;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        const style = window.getComputedStyle(window2);
+        initialLeft = parseInt(style.left, 10);
+        initialTop = parseInt(style.top, 10);
+        document.addEventListener("mousemove", doDrag);
+        document.addEventListener("mouseup", stopDrag);
+    }
+
+    // Yeniden boyutlandırma işleminin başlatılması
+    function startResize(e) {
+        e.preventDefault();
+        isDragging = true;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        startWidth = window2.offsetWidth;
+        startHeight = window2.offsetHeight;
+        document.addEventListener("mousemove", doResize);
+        document.addEventListener("mouseup", stopResize);
+    }
+
+    // Sürükleme işleminin gerçekleştirilmesi
+    function doDrag(e) {
+        if (!isDragging) return;
+        const offsetX = e.clientX - dragStartX;
+        const offsetY = e.clientY - dragStartY;
+        window2.style.left = initialLeft + offsetX + "px";
+        window2.style.top = initialTop + offsetY + "px";
+    }
+
+    // Yeniden boyutlandırma işleminin gerçekleştirilmesi
+    function doResize(e) {
+        if (!isDragging) return;
+        const newWidth = startWidth + e.clientX - dragStartX;
+        const newHeight = startHeight + e.clientY - dragStartY;
+        window2.style.width = newWidth + "px";
+        window2.style.height = newHeight + "px";
+    }
+
+    // Sürükleme işleminin durdurulması
+    function stopDrag() {
+        isDragging = false;
+        document.removeEventListener("mousemove", doDrag);
+        document.removeEventListener("mouseup", stopDrag);
+    }
+
+    // Yeniden boyutlandırma işleminin durdurulması
+    function stopResize() {
+        isDragging = false;
+        document.removeEventListener("mousemove", doResize);
+        document.removeEventListener("mouseup", stopResize);
+    }
+
+    // Pencereyi sıfırlama işlemi
+    function resetWindow() {
+        // Başlangıçtaki konum ve boyut değerlerini ayarla
+        window2.style.left = "calc(40% + 20px)";
+        window2.style.top = "0";
+        window2.style.width = "40%";
+        window2.style.height = "50vh";
+    }
+
+    // Sürükleme olaylarını engelle
+    window2.addEventListener("dragover", dragOver);
+    window2.addEventListener("drop", drop);
+
+    // Sürükleme işlemi sırasında tetiklenen olayı engelle
+    function dragOver(e) {
+        e.preventDefault();
+    }
+
+    // Nesnenin bırakıldığı konuma resmi yerleştirme işlemi
+    function drop(e) {
+        e.preventDefault();
+        const imageUrl = e.dataTransfer.getData("text");
+        const img = document.createElement("img");
+        img.src = imageUrl;
+        img.width = 300;
+        img.height = 200;
+        img.style.position = "absolute";
+        img.style.left = (e.clientX - window2.getBoundingClientRect().left) + "px"; // Bounding rectangle(boyut ve pozisyon belirleme) kullanıldı
+        img.style.top = (e.clientY - window2.getBoundingClientRect().top) + "px"; // Bounding rectangle(boyut ve pozisyon belirleme) kullanıldı
+        img.addEventListener("mousedown", startImgDrag);
+        window2.appendChild(img);
+    }
+
+    // Resmin sürükleme işleminin başlatılması
+    let isImgDragging = false;
+    let imgDragStartX, imgDragStartY;
+
+    function startImgDrag(e) {
+        e.preventDefault();
+        isImgDragging = true;
+        imgDragStartX = e.clientX - parseInt(e.target.style.left);
+        imgDragStartY = e.clientY - parseInt(e.target.style.top);
+        document.addEventListener("mousemove", doImgDrag);
+        document.addEventListener("mouseup", stopImgDrag);
+    }
+
+    // Resmin sürükleme işleminin gerçekleştirilmesi
+    function doImgDrag(e) {
+        if (!isImgDragging) return;
+        e.target.style.left = (e.clientX - imgDragStartX) + "px";
+    e.target.style.top = (e.clientY - imgDragStartY) + "px";
+    }
+    // Resmin sürükleme işleminin durdurulması
+    function stopImgDrag() {
+        isImgDragging = false;
+        document.removeEventListener("mousemove", doImgDrag);
+        document.removeEventListener("mouseup", stopImgDrag);
+    }
+</script>
+</body>
+</html>
+
